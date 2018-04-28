@@ -10,6 +10,9 @@ import sys
 import serial
 from random import randint
 import chilkat
+import serial.tools.list_ports
+import Sensor
+##import numpy
 
 from struct import unpack
 from binascii import unhexlify
@@ -20,7 +23,8 @@ SOCK_OWNER_COUNTRY_1 = 'no_country_entered'
 SOCK_OWNER_NAME_2 = 'no_name_entered'
 SOCK_OWNER_COUNTRY_2 = 'no_country_entered'
 CURRENT_DATE_TIME = 'system_date_error'
-CSV_FILE_NAME = 'no_time_stamp_assigned'
+CSV_FILE_NAME = 'no_csv_name_assigned'
+counter = 0
 EXPERIMENT_PREP_TIME = 5
 EXPERIMENT_RUN_TIME = 30
 DATA_COLLECTED = []
@@ -91,6 +95,21 @@ Experiment summary:
 #            /    /
 #
 # '''
+
+
+olfactometer = '''
+#
+                                    |=====================
+                                    |                     |==========
+                                    |                     | =========                     
+        ===|========================|
+                                                          |========== 
+        ===|========================|                      
+                                    |                     |==========
+                                    |                     |
+                                    |=====================|
+#
+# '''
 def run_experiment():
     global SOCK_OWNER_NAME_1, SOCK_OWNER_COUNTRY_1, SOCK_OWNER_NAME_2, SOCK_OWNER_COUNTRY_2, CSV_FILE_NAME, CURRENT_DATE_TIME
     clear()
@@ -116,7 +135,7 @@ def run_experiment():
     raw_input('\nConfirm information and prep Gates. Press <enter> to begin. (You will have 5 seconds to get into place)\n ')
 
     print(experiment_header)
-    count_down('Open gates in', EXPERIMENT_PREP_TIME, '', False)
+##    count_down('Open gates in', EXPERIMENT_PREP_TIME, '', False)
     start_sensor_reader()
     print(experiment_footer)
 
@@ -128,10 +147,10 @@ def run_experiment():
         run_experiment()
 
 def write_to_csv():
-    global SOCK_OWNER_NAME_1, SOCK_OWNER_COUNTRY_1, CSV_FILE_NAME, CURRENT_DATE_TIME
-    DATA_COLLECTED = [[SOCK_OWNER_NAME_1, SOCK_OWNER_COUNTRY_1, CURRENT_DATE_TIME] , [randint(0,1) for p in range(0,30)]] #Delete when real data is here
+    global SOCK_OWNER_NAME_1, SOCK_OWNER_COUNTRY_1, SOCK_OWNER_NAME_2, SOCK_OWNER_COUNTRY_2, CSV_FILE_NAME, CURRENT_DATE_TIME, counter
+    DATA_COLLECTED = [[SOCK_OWNER_NAME_1, SOCK_OWNER_COUNTRY_1, CURRENT_DATE_TIME, SOCK_OWNER_NAME_2, SOCK_OWNER_COUNTRY_2, counter]] #Delete when real data is here
     csv.register_dialect('myDialect', delimiter=',', quoting=csv.QUOTE_NONE)
-    new_csv_file = open('C:\\' + CSV_FILE_NAME, 'w')
+    new_csv_file = open('./csv_library/' + CSV_FILE_NAME, 'w')
     with new_csv_file:
         writer = csv.writer(new_csv_file, dialect = 'myDialect')
         writer.writerows(DATA_COLLECTED)
@@ -149,59 +168,260 @@ def yes_or_no(question):
         return False
     else:
         return yes_or_no("Please enter either y or n")
+             
+def pline(left,right,center):
+            print("|" + left.center(30, ' ') +
+              "|".ljust(30, ' ') + "|" + right.center(30, ' ') +
+              "|".ljust(30, ' ') + "|" + center.center(30, ' ') + "|")
 
+
+
+        
 def start_sensor_reader():
+    global counter
     counter = 0 #will count how many mosquitos have broken the plane
     voltage = 5 # voltage is assigned the maximun amount of voltage to begin
     voltage_array = [1000]
     voltage_population_size = 1000
+    
+##    ArduinoSerial = serial.Serial("/dev/ttyACM1", 14400)
+    
+## HERE!!!!! 
+##    fan_arduino = find_arduino("fan_arduino",serial_number='55739323237351616062')
+##    left_decision_chamber_sensor = find_arduino("left_decision_chamber",serial_number='55739323237351310101')
+##    right_decision_chamber_sensor = find_arduino("right_decision_chamber",serial_number='5573932323735121C051')
+##    release_chamber_sensor = find_arduino("release_chamber",serial_number='55739323237351D091A1')
+    
+    
+##    left_decision_chamber_sensor = init_sensor("left_decision_chamber","55739323237351310101")
+##    time.sleep(2) #wait for 2 secounds for the communication to get established            
+##    print("Calibrating sensors...\n")
+##    
+##    for i in range(0, voltage_population_size):
+##        voltage_array.append(0)
+##        try:
+##            serialOutput = left_decision_chamber_sensor.readline().strip().replace('\r','')
+##            voltage_array[i] = float(serialOutput)
+##        except Exception:
+##            print("failed!!!!")
+##            voltage_array[i] = 0.0
+##            pass
+##    
+##    voltage_array = sorted(voltage_array)
+##    left_dc_average_voltage = voltage_array[900]
+##    voltage_array = []
+##            
+##        
+##    print("Average voltage reading: " + str(left_dc_average_voltage) + "\n")
+ ## TO HERE!!!!
+    
+    
+    left_dc_sensor = Sensor.init_sensor("left_decision_chamber","55739323237351310101")
+    
+##    print(left_decision_chamber_sensor.name)
+    
+    
+    count_down('Open gates in', 1, '', False) #delete after demo EXPERIMENT_PREP_TIME
+    sys.stdout.write("033[K")
+    t_end = time.time() + 60 * .5 #.5 is 30 seconds
+    print("TEST HAS BEGUN")
+    
+    left_dc_voltage = 0.00
+    right_dc_voltage = 0.00
+    release_chamber_voltage = 0.00
+    left =  ""
+    center = ""
+    right = ""
+    
+##    while time.time() < t_end:
+    while 1:
+        
+        try:
+##            left_dc_sensor.get_voltage()
+####            left_dc_voltage = float(left_decision_chamber_sensor.readline().strip().replace('\r',''))
+            right_dc_voltage = float(right_decision_chamber_sensor.readline().strip().replace('\r',''))
+            release_chamber_voltage = float(release_chamber_sensor.readline().strip().replace('\r',''))
+        except Exception:
+##            print("start_sensor_reader() ==> Error Converting to float")
+            pass
 
-    #Uncomment code below when serial ports are in use
+            
+##        print("|" + get_left_dc_voltage(left_dc_average_voltage, left_dc_voltage, flag).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(right_dc_voltage).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(release_chamber_voltage).center(10, ' ') + "|")
+        
+##        print("|" + str(left_dc_voltage).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(right_dc_voltage).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(release_chamber_voltage).center(10, ' ') + "|")
+        
+        left_dc_string = ""
+        
+        if(left_dc_sensor.voltage < (left_dc_sensor.avg_voltage - .01)):
+            counter+= 1
+##            left = ("!!!!!DETECTED!!!!! Total Mosquitos: " + str(counter))
+            pline("!!!!!DETECTED!!!!!",right_decision_chamber_sensor.readline().strip().replace('\r',''),release_chamber_sensor.readline().strip().replace('\r',''))
+            while(((float(left_decision_chamber_sensor.readline().strip().replace('\r',''))) < (left_dc_average_voltage)) and (time.time() < t_end)):
+                 pline("- not counted -",right_decision_chamber_sensor.readline().strip().replace('\r',''),release_chamber_sensor.readline().strip().replace('\r',''),)
+                 try:
+                    serialOutput = left_decision_chamber_sensor.readline().strip().replace('\r','')
+                    left_dc_voltage = float(serialOutput)
+                 except Exception:
+                    print("start_sensor_reader() ==> Error Converting to float")
+                    
+        if(right_dc_voltage < (left_dc_sensor.avg_voltage - .01)):
+            counter+= 1
+##            left = ("!!!!!DETECTED!!!!! Total Mosquitos: " + str(counter))
+            pline(left_dc_sensor.get_voltage(),"!!!!!DETECTED!!!!!",release_chamber_sensor.readline().strip().replace('\r',''))
+            while(((float(right_decision_chamber_sensor.readline().strip().replace('\r',''))) < (left_dc_average_voltage)) and (time.time() < t_end)):
+                 pline(left_dc_sensor.get_voltage(),"- not counted -",release_chamber_sensor.readline().strip().replace('\r',''),)
+                 try:
+                    serialOutput = right_decision_chamber_sensor.readline().strip().replace('\r','')
+                    left_dc_voltage = float(serialOutput)
+                 except Exception:
+                    print("start_sensor_reader() ==> Error Converting to float")
+        
+        if(release_chamber_voltage < (left_dc_sensor.avg_voltage  - .01)):
+            counter+= 1
+##            left = ("!!!!!DETECTED!!!!! Total Mosquitos: " + str(counter))
+            pline(left_dc_sensor.get_voltage(), right_decision_chamber_sensor.readline().strip().replace('\r',''),"!!!!!DETECTED!!!!!")
+            while(((float(release_chamber_sensor.readline().strip().replace('\r',''))) < (left_dc_average_voltage)) and (time.time() < t_end)):
+                 pline(left_dc_sensor.get_voltage(),right_decision_chamber_sensor.readline().strip().replace('\r',''),"- not counted -")
+                 try:
+                    serialOutput = release_chamber_voltage.readline().strip().replace('\r','')
+                    left_dc_voltage = float(serialOutput)
+                 except Exception:
+                    print("start_sensor_reader() ==> Error Converting to float")
+        
+        
+        
+        
+        
+        
+        
+        
+        pline(left_decision_chamber_sensor.readline().strip().replace('\r',''),release_chamber_sensor.readline().strip().replace('\r',''),right_decision_chamber_sensor.readline().strip().replace('\r',''))                   
+           
+           
+           
+           
+     
+           
 
-    # ArduinoSerial = serial.Serial('com4',9600) #Create Serial port object called arduinoSerialData !!!USE /dev/ttyACM0 on PI3 !!!
-    # print("Port opend <COM4>, at <9600> bits per second\n")
-    # time.sleep(2) #wait for 2 secounds for the communication to get established
-    # print("Calibrating sensors...\n")
-    #
-    # for x in range(0, voltage_population_size):
-    #     try:
-    #         serialOutput = ArduinoSerial.readline().strip().replace('\r','')
-    #         voltage_array[i] = float(serialOutput)
-    #     except Exception:
-    #         voltage_array[i] = 0.0
-    #         pass
-    #
-    # voltage_array = sorted(voltage_array)
-    # average_voltage = voltage_array[900]
-    #
-    # print("Average voltage reading: ")
-    # print(average_voltage)
-    # print('\n')
-    #
-    # count_down('Open gates in', 5, '', False) #delete after demo EXPERIMENT_PREP_TIME
-    #
-    # t_end = time.time() + 60 * .1 #.5 is 30 seconds
-    # print("TEST HAS BEGUN")
-    #
-    # while time.time() < t_end:
-    #
-    #     try:
-    #         serialOutput = ArduinoSerial.readline().strip().replace('\r','')
-    #         voltage = float(serialOutput)
-    #     except Exception:
-    #         print("start_sensor_reader() ==> Error Converting to float")
-    #         sys.exc_clear()
-    #
-    #     print(voltage)
-    #     if(voltage < (average_voltage - .05)):
-    #         print("!!!!!DETECTED!!!!! Total Mosquitos: ")
-    #         counter += 1
-    #         print(counter)
-    #
-    #         while(voltage < (average_voltage - .05) or (time.time() < t_end)):
-    #             print("-not counted-")
-    #             print(voltage)
-    #             voltage = float(ArduinoSerial.readline().strip().replace('\r',''))
+
+           
+##           
+
+##                    
+##        print("|   " + str(left_dc_voltage) + "   |")
+##        print("|" + str(left_dc_voltage).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(right_dc_voltage).center(10, ' ') +
+##              "|".ljust(10, ' ') + "|" + str(release_chamber_voltage).center(10, ' ') + "|")
+        
+        
+##        if(voltage < (left_dc_average_voltage - .01)):
+##            print("!!!!!DETECTED!!!!! Total Mosquitos: ")
+##            counter += 1
+##            print(counter)
+##   
+##            while(((float(left_decision_chamber_sensor.readline().strip().replace('\r',''))) < (left_dc_average_voltage)) and (time.time() < t_end)):
+##                 print("-not counted-")
+##                 print("|   " + str(voltage) + "   |")
+##                 try:
+##                    serialOutput = left_decision_chamber_sensor.readline().strip().replace('\r','')
+##                    voltage = float(serialOutput)
+##                 except Exception:
+##                    print("start_sensor_reader() ==> Error Converting to float")
+##                    sys.exit()
+                    
+            
+            
+            
+            
+            
+            
+            
+            
+            
+    
+##I started above this line!!!    
+##    print("Port opend </dev/ttyACM0> at <9600> bits per second\n")
+##    time.sleep(2) #wait for 2 secounds for the communication to get established
+##    print("Calibrating sensors...\n")
+##    
+##    for i in range(0, voltage_population_size):
+##        voltage_array.append(0)
+##        try:
+##            serialOutput = ArduinoSerial.readline().strip().replace('\r','')
+##            voltage_array[i] = float(serialOutput)
+##        except Exception:
+##            voltage_array[i] = 0.0
+##            pass
+##    
+##    voltage_array = sorted(voltage_array)
+##    average_voltage = voltage_array[900]
+    
+
+    
+    
+    
+##    print("Average voltage reading: ")
+##    print(average_voltage)
+##    print('\n')
+    
+##    count_down('Open gates in', 1, '', False) #delete after demo EXPERIMENT_PREP_TIME
+##    sys.stdout.write("033[K")
+##    t_end = time.time() + 60 * .5 #.5 is 30 seconds
+##    print("TEST HAS BEGUN")
+##    
+####    while time.time() < t_end:
+##    while 1:
+####        print(ArduinoSerial.readline().strip().replace('\r',''))
+##        
+##        
+##        try:
+##            serialOutput = ArduinoSerial.readline().strip().replace('\r','')
+##            voltage = float(serialOutput)
+##        except Exception:
+##            print("start_sensor_reader() ==> Error Converting to float")
+##            sys.exc_clear() 
+##        print(voltage)
+##
+##
+##        
+##        
+##        if(voltage < (average_voltage - .1)):
+##            print("!!!!!DETECTED!!!!! Total Mosquitos: ")
+##            counter += 1
+##            print(counter)
+##   
+##            while(((float(ArduinoSerial.readline().strip().replace('\r',''))) < (average_voltage)) and (time.time() < t_end)):
+##                 print("-not counted-")
+##                 print(voltage)
+##                 try:
+##                    serialOutput = ArduinoSerial.readline().strip().replace('\r','')
+##                    voltage = float(serialOutput)
+##                 except Exception:
+##                    print("start_sensor_reader() ==> Error Converting to float")
+##                    sys.exc_clear()
+##
+##            
+            
+            ##For M&M
+            
+##        if(voltage < (average_voltage - .05)):
+##            print("!!!!!DETECTED!!!!! Total Mosquitos: ")
+##            counter += 1
+##            print(counter)
+##   
+##            while(((float(ArduinoSerial.readline().strip().replace('\r',''))) < (average_voltage)) and (time.time() < t_end)):
+##                 print("-not counted-")
+##                 print(voltage)
+##                 try:
+##                    serialOutput = ArduinoSerial.readline().strip().replace('\r','')
+##                    voltage = float(serialOutput)
+##                 except Exception:
+##                    print("start_sensor_reader() ==> Error Converting to float")
+##                    sys.exc_clear()
 
     print("!!!!!!!!!!!!!!DONE!!!!!!!!!!!!!!\n")
     print("A total of ")
@@ -277,7 +497,7 @@ def post_csv():
         sys.exit()
 
     #  Upload from the local file to the SSH server.
-    success = sftp.UploadFile(handle,"C:\\" + CSV_FILE_NAME)
+    success = sftp.UploadFile(handle,"./csv_library/" + CSV_FILE_NAME)
     if (success != True):
         print(sftp.lastErrorText())
         sys.exit()
@@ -337,10 +557,12 @@ def choose_path():
                                 print(experiment_Details)
                                 print('Test Chamber 1'.ljust(32, ' ') + SOCK_OWNER_NAME_1.ljust(32, ' ') + SOCK_OWNER_COUNTRY_1.ljust(32, ' ') + CSV_FILE_NAME.ljust(32, ' '))# + '000000007826'.ljust(32, ' ') + '\n')
                                 print('Test Chamber 2'.ljust(32, ' ') + SOCK_OWNER_NAME_2.ljust(32, ' ') + SOCK_OWNER_COUNTRY_2.ljust(32, ' ') + CSV_FILE_NAME.ljust(32, ' '))# + '000000007827'.ljust(32, ' ') + '\n')
-                                raw_input('\nConfirm information and prep Gates. Press <enter> to begin. (You will have 5 seconds to get into place)\n ')
+                                raw_input('\nConfirm information and prep Gates. Press <enter> to begin. \n ')
 
                                 print(experiment_header)
-                                count_down('Open gates in', 5, '', False)
+                             ##   count_down('Open gates in', 5, '', False)
+                                
+                                
                                 start_sensor_reader()
                                 print(experiment_footer)
 
@@ -359,5 +581,5 @@ def clear():
 #
 clear()
 print(welcome)
-# time.sleep(4)
+##time.sleep(4)
 choose_path()
